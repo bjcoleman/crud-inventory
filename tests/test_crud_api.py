@@ -1,5 +1,6 @@
 import unittest
 import crud_api
+import json
 
 
 class TestCRUDAPI(unittest.TestCase):
@@ -10,4 +11,5 @@ class TestCRUDAPI(unittest.TestCase):
 
     def test_root(self):
         result = self.app.get('/')
-        self.assertEqual('{}', result.data)
+        inventory = json.loads(result.data)
+        self.assertEqual({}, inventory)
