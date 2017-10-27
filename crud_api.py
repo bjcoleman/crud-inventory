@@ -13,5 +13,6 @@ app = Flask(__name__)
 def current_inventory():
     return json.dumps({})
 
+
 if __name__ == '__main__':
     app.run(debug=True)
