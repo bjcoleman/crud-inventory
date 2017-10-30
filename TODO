@@ -1,1 +1,17 @@
 Does the json library encode and decode unicode characters?
+
+API Design Notes:
+* Four end points:
+  * search - search for products by keyword to obtain current inventory
+  * reserve - reserve a specified amount of a specified product (may only
+     reserve a partial quantity if inventory changes)
+  * buy - purchase a reserved product
+  * release - release some or all of a reserved product
+* Need to track changes in product state (in inventory, held, or sold)
+* If held, product inventory is not found via search
+* There is a time limit for how long products are held
+* Customers must reserve(hold) before buying
+* If the customer reserves more quantity than available, all available is held
+* For buy, a proof-of-purchase token is required
+* Reserve, buy, and release all require a customer ID token
+* All API calls require an app token
