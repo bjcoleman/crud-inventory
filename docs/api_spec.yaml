@@ -1,0 +1,24 @@
+openapi: 3.0.0
+info:
+  title: Inventory CRUD API
+  description: This is an example API for CSCI 298 during the Fall 2017 semester.  It allows users to search, reserve, release, and buy inventory.
+  version: 0.1.0
+paths:
+  /search:
+    get:
+      summary: Get a list of prodcuts and their quantity using a keyword search.
+      description: Allows the user to search the database for any products that match a keyword search term.  The term is a case-insensitive string, and the search will return any product where the name contains an exact match of the search term.
+
+        The return type is a JSON array of product/quantity pairs represented as a dict.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: A string of Unicode characters representing the search term.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A JSON array of product/quantity pairs represented as a dict.
+        '400':
+          description: Used if the query parameter is missing.
