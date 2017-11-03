@@ -14,11 +14,23 @@ paths:
         - name: query
           in: query
           required: true
-          description: A string of Unicode characters representing the search term.
+          description: A string of Unicode characters representing the search term.  Quotes around the search term are optional.
           schema:
             type: string
       responses:
         '200':
           description: A JSON array of product/quantity pairs represented as a dict.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Product name
+                  quantity:
+                    type: integer
+                    description: The quantity in inventory.
+
         '400':
-          description: Used if the query parameter is missing.
+          description: Used if the query parameter is missing or extra parameters are given.
