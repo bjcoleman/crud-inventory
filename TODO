@@ -1,5 +1,16 @@
 Does the json library encode and decode unicode characters?
 
+Test to write:
+* search term is partial match of single item; DB has 1 item
+* search term is partial match of single item; DB has >1 items
+* search term is partial match of multiple items; DB contains only those items
+* search term is partial match of multiple items; DB contains extra items
+* zero results on non-empty DB
+* case insensitivity
+* missing query parameter
+* extra query parameter
+* Anything else???
+
 API Design Notes:
 * Four end points:
   * search - search for products by keyword to obtain current inventory
