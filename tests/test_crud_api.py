@@ -13,3 +13,14 @@ class TestCRUDAPI(unittest.TestCase):
         result = self.app.get('/')
         inventory = json.loads(result.data)
         self.assertEqual({}, inventory)
+
+    def test_empty_db_search_provides_empty_results(self):
+        result = self.app.get('/search?query=foo')
+        inventory = json.loads(result.data)
+        self.assertEqual([], inventory)
+
+    def test_single_item_db_with_matching_search(self):
+        crud_api.pi.new_item('aquarium', 5)
+        result = self.app.get('/search?query=aquarium')
+        inventory = json.loads(result.data)
+        self.assertEqual([{'name': 'aquarium', 'quantity': 5}], inventory)
