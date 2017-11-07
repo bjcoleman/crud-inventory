@@ -1,5 +1,5 @@
 
-from flask import Flask, request
+from flask import Flask, request, Response
 import json
 
 from product_inventory import ProductInventory
@@ -16,6 +16,10 @@ def current_inventory():
 
 @app.route('/search')
 def inventory_search():
+    if len(request.args) != 1:
+        message = "Search requires a single query parameter named query"
+        return Response('["msg": "{}"]'.format(message), status=400)
+
     query = request.args.get('query', '')
     results = []
     for product in pi.get_product_list():
@@ -23,9 +27,6 @@ def inventory_search():
             quantity = pi.get_quantity(product)
             results.append({'name': product, 'quantity': quantity})
     return json.dumps(results)
-
-
-    return '[]'
 
 
 if __name__ == '__main__':
