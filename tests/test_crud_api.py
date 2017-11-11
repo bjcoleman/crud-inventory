@@ -1,43 +1,77 @@
-import unittest
-import crud_api
-import json
-import product_inventory
+from unittest import TestCase
+import redis
+
+from product_inventory import ProductInventory
 
 
-class TestCRUDAPI(unittest.TestCase):
+def make_inventory():
+    r = redis.Redis()
+    r.set('foo', 15)
+    r.set('bar', 20)
+    return ProductInventory({'foo': 15, 'bar': 20})
 
-    def setUp(self):
-        crud_api.app.testing = True
-        self.app = crud_api.app.test_client()
 
-    def initialize_database(self, inventory):
-        crud_api.pi = product_inventory.ProductInventory(inventory)
+def make_empty_inventory():
+    r = redis.Redis()
+    r.delete('foo')
+    r.delete('bar')
+    r.delete('abc')
+    return ProductInventory({})
 
-    def run_query(self, search_term):
-        result = self.app.get('/search?query={}'.format(search_term))
-        inventory = json.loads(result.data)
-        return inventory
 
-    def test_root(self):
-        result = self.app.get('/')
-        inventory = json.loads(result.data)
-        self.assertEqual({}, inventory)
+class TestProductInventory(TestCase):
 
-    def test_empty_db_search_provides_empty_results(self):
-        self.initialize_database({})
-        inventory = self.run_query('foo')
-        self.assertEqual([], inventory)
+    def test_new_empty_inventory(self):
+        pi = make_empty_inventory();
+        self.assertEqual(0, len(pi.get_product_list()))
+        self.assertFalse(pi.is_product('nothing'))
 
-    def test_single_item_db_with_matching_search(self):
-        self.initialize_database({'aquarium': 5})
-        inventory = self.run_query('aquarium')
-        self.assertEqual([{'name': 'aquarium', 'quantity': 5}], inventory)
+    def test_new_nonempty_inventory(self):
+        pi = make_inventory()
+        self.assertInventory({'foo': 15, 'bar': 20}, pi)
 
-    def test_single_item_db_with_non_matching_search(self):
-        self.initialize_database({'phone': 2})
-        inventory = self.run_query('aquarium')
-        self.assertEqual(0, len(inventory))
+    def test_reduce_product_inventory_with_full_availability(self):
+        pi = make_inventory()
+        quantity_removed = pi.reduce_inventory('foo', 5)
+        self.assertEqual(5, quantity_removed)
+        self.assertInventory({'foo': 10, 'bar': 20}, pi)
 
-    def test_extra_query_parameter_is_400_status(self):
-        result = self.app.get('/search?query=foo&value=bar')
-        self.assertEqual(400, result.status_code)
+    def test_reduce_product_inventory_with_partial_availability(self):
+        pi = make_inventory()
+        quantity_removed = pi.reduce_inventory('foo', 30)
+        self.assertEqual(15, quantity_removed)
+        self.assertInventory({'foo': 0, 'bar': 20}, pi)
+
+    def test_increase_product_inventory(self):
+        pi = make_inventory()
+        pi.increase_inventory('foo', 5)
+        self.assertInventory({'foo': 20, 'bar': 20}, pi)
+
+    def test_new_product(self):
+        pi = make_inventory()
+        pi.new_item('abc', 13)
+        self.assertInventory({'foo': 15, 'bar': 20, 'abc': 13}, pi)
+
+    def test_add_existing_product(self):
+        pi = make_inventory()
+        self.assertRaises(Exception, pi.new_item, 'foo', 5)
+
+    def test_reduce_nonexistent_product(self):
+        pi = make_inventory()
+        self.assertRaises(Exception, pi.reduce_inventory, 'abc', 5)
+
+    def test_get_quantity_nonexistent_product(self):
+        pi = make_inventory()
+        self.assertRaises(Exception, pi.get_quantity, 'abc')
+
+    def test_increase_nonexistent_product(self):
+        pi = make_inventory()
+        self.assertRaises(Exception, pi.increase_inventory, 'abc', 5)
+
+    def assertInventory(self, expected_inventory, pi):
+        self.assertEqual(len(expected_inventory), len(pi.get_product_list()))
+        self.assertFalse(pi.is_product('nothing'))
+
+        for product in expected_inventory:
+            self.assertTrue(pi.is_product(product))
+            self.assertEqual(expected_inventory[product], pi.get_quantity(product))
